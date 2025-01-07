@@ -44,6 +44,16 @@ def main():
     print(f"{request.host}")
     return render_template('index.html', image_path=artist_json["images"][1]["url"])
 
+@app.route("/brat")
+def brat():
+    token = get_spotify_access_token()
+    response = requests.get(
+        url='https://api.spotify.com/v1/albums/2lIZef4lzdvZkiiCzvPKj7',
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    album_json = response.json()
+
+    return album_json
 
 @app.route("/login")
 def login():
