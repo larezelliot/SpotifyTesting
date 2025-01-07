@@ -51,7 +51,7 @@ def login():
     params = urllib.parse.urlencode({
         "response_type": "code",
         "client_id": os.getenv("SPOTIFY_CLIENT_ID"),
-        "scope": os.getenv("SPOTIFY_AUTH_SCOPE"),
+        "scope": "user-read-private user-read-email",
         "redirect_uri": f"http://{request.host}/spotify-callback",
         # TODO: "state": This provides protection against attacks such as cross-site request forgery. See RFC-6749.
     })
