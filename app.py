@@ -55,6 +55,17 @@ def brat():
 
     return album_json
 
+@app.route("/club-classics")
+def clubclassics():
+    token = get_spotify_access_token()
+    response = requests.get(
+        url='https://api.spotify.com/v1/tracks/7BoOmRrtNCbIT9yQ4xidk5',
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    album_json = response.json()
+
+    return album_json
+
 @app.route("/login")
 def login():
     url = "https://accounts.spotify.com/authorize"
