@@ -86,7 +86,8 @@ def login():
 
 @app.route('/spotify-callback')
 def spotify_callback():
-    return 'Welcome to Spotify API!'
+    token = request.args.get('code')
+    return f"Welcome {token[0:5]} ..."
 
 if __name__ == "__main__":
     load_dotenv(override=True)
