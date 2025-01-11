@@ -44,6 +44,10 @@ def main():
     print(f"{request.host}")
     return render_template('index.html', image_path=artist_json["images"][1]["url"])
 
+@app.route("/home")
+def home():
+    return render_template('home.html')
+
 @app.route("/brat")
 def brat():
     token = get_spotify_access_token()
@@ -83,7 +87,6 @@ def login():
 @app.route('/spotify-callback')
 def spotify_callback():
     return 'Welcome to Spotify API!'
-
 
 if __name__ == "__main__":
     load_dotenv(override=True)
