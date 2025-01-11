@@ -13,22 +13,20 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 class User(flask_login.UserMixin):
-    def __init__(self, token, id):
-        self.token = token
+    def __init__(self, id, code):
         self.id = id
+        self.code = code
 
+users = {}
 
 @login_manager.user_loader
 def user_loader(id):
     return users.get(id)
-users = {}
 
 @app.route("/user-profile")
 @flask_login.login_required
 def user_profile():
     user = flask_login.current_user
-    print(user)
-    print(user.token)
     display_name = get_user_profile(user)
     return f"Your display name is {display_name}" # Fill in later
 
@@ -38,9 +36,11 @@ def logout():
     return "Logged out"
 
 def get_user_profile(user):
+    token = get_spotify_access_token_from_code(user.code)
+    print('TOKEN:', token)
     response = requests.get(
         url = "https://api.spotify.com/v1/me",
-        headers = {f"Authorization: Bearer {user.token}"}
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/x-www-form-urlencoded"}
     )
     response.raise_for_status()
 
@@ -64,6 +64,24 @@ def get_spotify_access_token():
 
     return token_response.json()["access_token"]
 
+def get_spotify_access_token_from_code(code):
+    encoded_auth = os.getenv("SPOTIFY_BASE64_AUTH")
+
+    token_response = requests.post(
+        url="https://accounts.spotify.com/api/token",
+        headers={
+            "Authorization": f"Basic {encoded_auth}", 
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": f"http://{request.host}/spotify-callback",
+        }
+    )
+    token_response.raise_for_status()
+
+    return token_response.json()["access_token"]
 
 def get_spotify_artist(id):
     token = get_spotify_access_token()
@@ -125,8 +143,8 @@ def login():
 
 @app.route('/spotify-callback')
 def spotify_callback():
-    token = request.args.get('code')
-    user = User(token, "person")
+    code = request.args.get('code')
+    user = User("person", code)
     users["person"] = user
     flask_login.login_user(user)
     return redirect(url_for("user_profile"))
