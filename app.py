@@ -1,11 +1,50 @@
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, url_for
 from dotenv import load_dotenv
+import flask_login
 import requests
 import urllib
 import os
 
 
 app = Flask(__name__)
+app.secret_key = "gdauhaj"  # random temporary password
+
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+class User(flask_login.UserMixin):
+    def __init__(self, token, id):
+        self.token = token
+        self.id = id
+
+
+@login_manager.user_loader
+def user_loader(id):
+    return users.get(id)
+users = {}
+
+@app.route("/user-profile")
+@flask_login.login_required
+def user_profile():
+    user = flask_login.current_user
+    print(user)
+    print(user.token)
+    display_name = get_user_profile(user)
+    return f"Your display name is {display_name}" # Fill in later
+
+@app.route("/logout")
+def logout():
+    flask_login.logout_user()
+    return "Logged out"
+
+def get_user_profile(user):
+    response = requests.get(
+        url = "https://api.spotify.com/v1/me",
+        headers = {f"Authorization: Bearer {user.token}"}
+    )
+    response.raise_for_status()
+
+    return response.json()["display_name"]
 
 
 def get_spotify_access_token():
@@ -87,7 +126,10 @@ def login():
 @app.route('/spotify-callback')
 def spotify_callback():
     token = request.args.get('code')
-    return f"Welcome {token[0:5]} ..."
+    user = User(token, "person")
+    users["person"] = user
+    flask_login.login_user(user)
+    return redirect(url_for("user_profile"))
 
 if __name__ == "__main__":
     load_dotenv(override=True)
